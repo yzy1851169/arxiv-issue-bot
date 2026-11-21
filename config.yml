@@ -1,25 +1,200 @@
-# arXiv categories to monitor
-# Full list: https://arxiv.org/category_taxonomy
+
+# ============================================================
+# arXiv Research Radar
+# Focus: GPU Architecture + AI Infrastructure
+# ============================================================
+
+# ------------------------------------------------------------
+# 1. arXiv categories
+# ------------------------------------------------------------
+
 categories:
+
+  # Core: GPU architecture and performance
   - cs.AR
+  - cs.PF
+
+  # AI infrastructure and distributed systems
+  - cs.DC
+  - cs.OS
+  - cs.NI
+
+  # LLM models and AI methods
+  - cs.LG
+  - cs.CL
   - cs.AI
 
-# Optional keyword filters (applied to title + abstract)
-# If empty or omitted, ALL papers in the categories above are posted.
-# Papers matching ANY keyword are included.
+  # Compiler, data structures and storage systems
+  - cs.PL
+  - cs.DB
+  - cs.DS
+  - cs.CE
+
+  # Emerging memory and device technologies
+  - physics.app-ph
+
+
+# ------------------------------------------------------------
+# 2. Keywords
+# Matching is case-insensitive.
+# A paper is included if ANY keyword matches its title or abstract.
+# ------------------------------------------------------------
+
 keywords:
-  - "large language model"
-  - "transformer accelerator"
-  - "AI hardware"
-  - "LLM hardware"
+
+  # ===== A. GPU Architecture & Microarchitecture =====
+
+  - "GPU architecture"
+  - "GPU microarchitecture"
+  - "GPU memory system"
+  - "GPU cache"
+  - "GPU kernel"
+  - "GPU scheduling"
+  - "GPU runtime"
+  - "GPU compiler"
+  - "AI accelerator"
+  - "accelerator architecture"
+  - "hardware-software co-design"
+
+  - "warp scheduling"
+  - "CTA scheduling"
+  - "SM scheduling"
+  - "register file"
+  - "register allocation"
+  - "operand collector"
+  - "load-store unit"
+  - "memory coalescing"
+  - "memory divergence"
+  - "memory-level parallelism"
+  - "latency hiding"
+  - "bank conflict"
+  - "cache hierarchy"
+  - "memory hierarchy"
+  - "cache line utilization"
+  - "sector utilization"
+
+  - "concurrent kernels"
+  - "kernel concurrency"
+  - "CUDA stream"
+  - "GPU sharing"
+  - "GPU virtualization"
+
+  # ===== B. GPU Performance & Simulation =====
+
+  - "GPU simulation"
+  - "cycle-level simulation"
+  - "trace-driven simulation"
+  - "performance modeling"
+  - "performance characterization"
+  - "workload characterization"
+  - "Roofline"
+  - "outstanding memory requests"
+  - "GPU profiling"
+  - "kernel fusion"
+  - "CUDA Graph"
+  - "Triton"
+
+  # ===== C. LLM Inference & Serving Systems =====
+
+  - "LLM inference"
+  - "LLM serving"
+  - "large language model inference"
+  - "inference serving"
+  - "continuous batching"
+  - "PagedAttention"
+  - "FlashAttention"
+  - "Flash-Decoding"
+
+  - "KV cache"
+  - "prefix caching"
+  - "KV cache offloading"
+  - "KV cache compression"
+  - "KV cache quantization"
+  - "KV disaggregation"
+  - "expert caching"
+
+  - "prefill-decode disaggregation"
+  - "disaggregated inference"
+  - "distributed inference"
+  - "multi-GPU inference"
+
+  - "sparse attention"
+  - "linear attention"
+  - "long-context inference"
+  - "speculative decoding"
+  - "Multi-head Latent Attention"
+  - "tensor parallel"
+  - "pipeline parallel"
+  - "expert parallel"
+  - "Mixture of Experts"
+
+  - "vLLM"
+  - "SGLang"
+  - "DistServe"
+  - "Mooncake"
+
+  # ===== D. Memory Systems & Emerging Memory =====
+
+  - "high bandwidth memory"
+  - "HBM"
+  - "High Bandwidth Flash"
+  - "HBF"
+  - "HBM cache"
+
+  - "CXL memory"
+  - "CXL.mem"
+  - "memory disaggregation"
+  - "memory pooling"
+  - "memory tiering"
+  - "tiered memory"
+  - "heterogeneous memory"
+  - "memory fabric"
+  - "memory-centric architecture"
+
+  - "near-memory processing"
+  - "processing-in-memory"
   - "PIM"
   - "PNM"
 
-# Maximum number of papers to fetch per category per run
-max_results_per_category: 50
+  - "3D DRAM"
+  - "3D-stacked DRAM"
+  - "stacked DRAM"
+  - "hybrid bonding"
+  - "wafer-on-wafer"
+  - "logic-on-memory"
 
-# Issue label prefix (categories become labels like "arxiv:cs.AI")
+  # ===== E. GPU Interconnect & Distributed Communication =====
+
+  - "NVLink"
+  - "NVSwitch"
+  - "InfiniBand"
+  - "RDMA"
+  - "GPU interconnect"
+  - "collective communication"
+  - "AllReduce"
+  - "scale-up network"
+  - "scale-out network"
+
+  # ===== F. GPU Algorithms & Data Structures =====
+
+  - "GPU hash table"
+  - "hash-table lookup"
+  - "hash table lookup"
+  - "GPU graph processing"
+  - "SpGEMM"
+  - "sparse matrix multiplication"
+  - "sparse data structure"
+
+
+# ------------------------------------------------------------
+# 3. Fetching configuration
+# ------------------------------------------------------------
+
+# Number of newest papers fetched per category BEFORE keyword filtering
+max_results_per_category: 200
+
+# Issue labels
 label_prefix: "arxiv"
 
-# Whether to include cross-listed papers
+# Include papers cross-listed in monitored categories
 include_cross_listed: true
