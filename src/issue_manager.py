@@ -1,43 +1,62 @@
-import json
 import re
 import subprocess
 
 from src.fetcher import Paper
+
+_ensured_labels: set[str] = set()
 
 
 def normalize_arxiv_id(arxiv_id: str) -> str:
     return re.sub(r"v\d+$", "", arxiv_id)
 
 
-def is_already_posted(arxiv_id: str) -> bool:
-    base_id = normalize_arxiv_id(arxiv_id)
+def extract_arxiv_id_from_title(title: str) -> str | None:
+    if title.startswith("[") and "]" in title:
+        raw_id = title[1 : title.index("]")].strip()
+        if raw_id:
+            return normalize_arxiv_id(raw_id)
+    return None
+
+
+def fetch_posted_arxiv_ids() -> set[str]:
     result = subprocess.run(
         [
             "gh",
-            "search",
-            "issues",
-            f"[{base_id}] in:title",
-            "--json",
-            "title",
-            "--limit",
-            "5",
+            "api",
+            "--paginate",
+            "repos/{owner}/{repo}/issues?state=all&per_page=100",
+            "--jq",
+            ".[] | select(.pull_request == null) | .title",
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
-        return False
-    issues = json.loads(result.stdout)
-    for issue in issues:
-        title = issue.get("title", "")
-        if title.startswith("[") and "]" in title:
-            existing_id = title[1 : title.index("]")]
-            if normalize_arxiv_id(existing_id) == base_id:
-                return True
-    return False
+        raise RuntimeError(
+            f"Failed to fetch existing issues for deduplication: {result.stderr.strip()}"
+        )
+
+    posted_ids: set[str] = set()
+    for line in result.stdout.splitlines():
+        arxiv_id = extract_arxiv_id_from_title(line.strip())
+        if arxiv_id:
+            posted_ids.add(arxiv_id)
+    return posted_ids
+
+
+def is_already_posted(
+    arxiv_id: str, posted_ids: set[str] | None = None
+) -> bool:
+    if posted_ids is None:
+        posted_ids = fetch_posted_arxiv_ids()
+    return normalize_arxiv_id(arxiv_id) in posted_ids
 
 
 def ensure_label_exists(label: str) -> None:
+    if label in _ensured_labels:
+        return
     result = subprocess.run(
         [
             "gh",
@@ -50,10 +69,14 @@ def ensure_label_exists(label: str) -> None:
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         print(f"ERROR creating label: {label}")
         print(f"STDERR: {result.stderr}")
+    else:
+        _ensured_labels.add(label)
 
 
 def format_issue_body(paper: Paper) -> str:
@@ -97,6 +120,8 @@ def create_issue(paper: Paper, label_prefix: str) -> bool:
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         print(f"ERROR creating issue: {title}")

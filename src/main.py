@@ -4,7 +4,12 @@ import time
 from src.config import load_config
 from src.fetcher import ArxivFetcher, Paper
 from src.filter import filter_papers
-from src.issue_manager import create_issue, is_already_posted, normalize_arxiv_id
+from src.issue_manager import (
+    create_issue,
+    fetch_posted_arxiv_ids,
+    is_already_posted,
+    normalize_arxiv_id,
+)
 
 
 def main() -> None:
@@ -31,12 +36,18 @@ def main() -> None:
     filtered = filter_papers(list(all_papers.values()), config.keywords)
     print(f"After keyword filtering: {len(filtered)} papers")
 
-    new_papers = [p for p in filtered if not is_already_posted(p.source_id)]
+    posted_ids = fetch_posted_arxiv_ids() if filtered else set()
+    print(f"Existing posted papers in repository: {len(posted_ids)}")
+
+    new_papers = [p for p in filtered if not is_already_posted(p.source_id, posted_ids)]
     print(f"New papers (not yet posted): {len(new_papers)}")
 
     created = 0
-    for paper in new_papers:
+    for i, paper in enumerate(new_papers):
+        if i > 0:
+            time.sleep(1)
         if create_issue(paper, config.label_prefix):
+            posted_ids.add(normalize_arxiv_id(paper.source_id))
             created += 1
             print(f"  Created: [{paper.source_id}] {paper.title}")
         else:
