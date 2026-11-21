@@ -38,7 +38,7 @@ def is_already_posted(arxiv_id: str) -> bool:
 
 
 def ensure_label_exists(label: str) -> None:
-    subprocess.run(
+    result = subprocess.run(
         [
             "gh",
             "label",
@@ -51,6 +51,9 @@ def ensure_label_exists(label: str) -> None:
         capture_output=True,
         text=True,
     )
+    if result.returncode != 0:
+        print(f"ERROR creating label: {label}")
+        print(f"STDERR: {result.stderr}")
 
 
 def format_issue_body(paper: Paper) -> str:
@@ -95,4 +98,11 @@ def create_issue(paper: Paper, label_prefix: str) -> bool:
         capture_output=True,
         text=True,
     )
-    return result.returncode == 0
+    if result.returncode != 0:
+        print(f"ERROR creating issue: {title}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        return False
+    
+    print(f"ISSUE CREATED: {result.stdout.strip()}")
+    return True
