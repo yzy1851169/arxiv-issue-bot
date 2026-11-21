@@ -1,7 +1,14 @@
+import os
+from pathlib import Path
 import sys
 import time
 
 from src.config import load_config
+from src.differ import (
+    build_metadata_abstract_diff,
+    fetch_paper_version,
+    generate_source_diff,
+)
 from src.fetcher import ArxivFetcher, Paper
 from src.filter import filter_papers
 from src.issue_manager import (
@@ -11,6 +18,15 @@ from src.issue_manager import (
     parse_arxiv_version,
     update_issue_for_new_version,
 )
+
+
+def _get_actions_run_url() -> str | None:
+    server = os.environ.get("GITHUB_SERVER_URL")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    if server and repo and run_id:
+        return f"{server}/{repo}/actions/runs/{run_id}"
+    return None
 
 
 def main() -> None:
@@ -71,11 +87,30 @@ def main() -> None:
                 file=sys.stderr,
             )
 
+    run_url = _get_actions_run_url()
+    diffs_dir = Path("diffs")
     updated = 0
     for i, (existing, paper) in enumerate(updated_papers):
         if i > 0 or created > 0:
             time.sleep(1)
-        if update_issue_for_new_version(existing, paper, config.label_prefix):
+        old_paper = fetch_paper_version(existing.arxiv_id, existing.version)
+        metadata_diff = (
+            build_metadata_abstract_diff(old_paper, paper) if old_paper else ""
+        )
+        source_diff = generate_source_diff(
+            existing.arxiv_id,
+            existing.version,
+            parse_arxiv_version(paper.source_id),
+            diffs_dir,
+        )
+        if update_issue_for_new_version(
+            existing,
+            paper,
+            config.label_prefix,
+            metadata_diff=metadata_diff,
+            source_diff=source_diff,
+            run_url=run_url,
+        ):
             updated += 1
             print(
                 f"  Updated: #{existing.number} [{paper.source_id}] {paper.title}"

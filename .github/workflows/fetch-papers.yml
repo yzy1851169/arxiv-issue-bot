@@ -24,4 +24,12 @@ jobs:
         run: 
           uv sync;
           uv run python -m src.main --delay 2 --retry 3 --timeout 10
+
+      - name: Upload paper diffs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arxiv-version-diffs
+          path: diffs/
+          if-no-files-found: ignore
           

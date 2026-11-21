@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 
+from src.differ import SourceDiffResult
 from src.fetcher import Paper
 
 _ensured_labels: set[str] = set()
@@ -151,7 +152,13 @@ def format_issue_body(paper: Paper) -> str:
     )
 
 
-def format_update_comment(paper: Paper, old_version: int) -> str:
+def format_update_comment(
+    paper: Paper,
+    old_version: int,
+    metadata_diff: str = "",
+    source_diff: SourceDiffResult | None = None,
+    run_url: str | None = None,
+) -> str:
     new_version = parse_arxiv_version(paper.source_id)
     links = f"[abs]({paper.url})"
     if paper.pdf_url:
@@ -166,6 +173,33 @@ def format_update_comment(paper: Paper, old_version: int) -> str:
         lines.append(f"**Comment:** {paper.comment}")
     lines.append(f"**Links:** {links}")
     lines.append("")
+
+    if metadata_diff:
+        lines.append("#### Metadata & Abstract Diff")
+        lines.append("")
+        lines.append(metadata_diff)
+        lines.append("")
+
+    if source_diff is not None:
+        lines.append("#### TeX Source Diff")
+        lines.append("")
+        if source_diff.available:
+            if source_diff.stat:
+                lines.append("```text")
+                lines.append(source_diff.stat)
+                lines.append("```")
+            else:
+                lines.append("_No TeX source changes detected._")
+            if source_diff.diff_file is not None:
+                artifact_note = f"Full diff file: `{source_diff.diff_file.name}`"
+                if run_url:
+                    artifact_note += f" (download from [Actions Artifacts]({run_url}))"
+                lines.append("")
+                lines.append(artifact_note)
+        else:
+            lines.append(f"_TeX source diff unavailable: {source_diff.reason}_")
+        lines.append("")
+
     lines.append("Issue title and body have been updated to the latest version.")
     return "\n".join(lines) + "\n"
 
@@ -207,7 +241,12 @@ def create_issue(paper: Paper, label_prefix: str) -> bool:
 
 
 def update_issue_for_new_version(
-    existing: ExistingIssue, paper: Paper, label_prefix: str
+    existing: ExistingIssue,
+    paper: Paper,
+    label_prefix: str,
+    metadata_diff: str = "",
+    source_diff: SourceDiffResult | None = None,
+    run_url: str | None = None,
 ) -> bool:
     title = f"[{paper.source_id}] {paper.title}"
     labels = [f"{label_prefix}:{cat}" for cat in paper.categories]
@@ -241,7 +280,13 @@ def update_issue_for_new_version(
         print(f"STDERR: {edit_result.stderr}")
         return False
 
-    comment_body = format_update_comment(paper, existing.version)
+    comment_body = format_update_comment(
+        paper,
+        existing.version,
+        metadata_diff=metadata_diff,
+        source_diff=source_diff,
+        run_url=run_url,
+    )
     comment_result = subprocess.run(
         [
             "gh",
