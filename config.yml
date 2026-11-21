@@ -153,15 +153,15 @@ keywords:
 
   - "near-memory processing"
   - "processing-in-memory"
-  - "PIM"
-  - "PNM"
+  # - "PIM"
+  # - "PNM"
 
   - "3D DRAM"
   - "3D-stacked DRAM"
   - "stacked DRAM"
   - "hybrid bonding"
   - "wafer-on-wafer"
-  - "logic-on-memory"
+  # - "logic-on-memory"
 
   # ===== E. GPU Interconnect & Distributed Communication =====
 
